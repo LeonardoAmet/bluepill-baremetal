@@ -1,14 +1,17 @@
 #include <stdint.h>
 
-extern uint32_t __reset_stack_pointer; // Valor inicial de stack pointer
-extern uint32_t _sdata;             // Dirección inicial para la sección .data
-extern uint32_t _edata;             // Dirección final para la sección .data
-extern uint32_t _load_address;      // Load address para la sección .data en la memoria flash
-extern uint32_t _sbss;              // Dirección inical para la sección .bss
-extern uint32_t _ebss;              // Dirección final  para la sección .bss
+// Declaración de símbolos definidos en el linker script
+extern uint32_t __reset_stack_pointer;  // Valor inicial de stack pointer
+extern uint32_t _sdata;                 // Dirección inicial para la sección .data
+extern uint32_t _edata;                 // Dirección final para la sección .data
+extern uint32_t _load_address;          // Load address para la sección .data en la memoria flash
+extern uint32_t _sbss;                  // Dirección inical para la sección .bss
+extern uint32_t _ebss;                  // Dirección final  para la sección .bss
 
 int main(void);
 
+// Declaración de los handlers de interrupciones
+// Si no se definen explícitamente, todos apuntan a Default_Handler
 void Reset_Handler(void);
 void SVC_Handler(void)               __attribute__((weak, alias("Default_Handler")));
 void DebugMon_Handler(void)          __attribute__((weak, alias("Default_Handler")));
@@ -57,6 +60,8 @@ void EXTI15_10_IRQHandler(void)      __attribute__((weak, alias("Default_Handler
 void RTC_Alarm_IRQHandler(void)      __attribute__((weak, alias("Default_Handler")));
 void USBWakeUp_IRQHandler(void)      __attribute__((weak, alias("Default_Handler")));
 
+// Tabla de vectores: ubicada en la sección .isr_vector
+// Contiene las direcciones de los handlers e inicialización del stack
 __attribute__((section(".isr_vector")))
 void (*const vector_table[])(void) = {
     (void (*)(void))(&__reset_stack_pointer), // Stack pointer inicial
@@ -75,6 +80,7 @@ void (*const vector_table[])(void) = {
     0,                                // Reserved
     PendSV_Handler,                   // PendSV handler
     SysTick_Handler,                  // SysTick handler
+     // Interrupciones externas
     EXTI0_IRQHandler,                 // External interrupt 0 handler
     EXTI1_IRQHandler,                 // External interrupt 1 handler
     EXTI2_IRQHandler,                 // External interrupt 2 handler
@@ -114,10 +120,12 @@ void (*const vector_table[])(void) = {
     USBWakeUp_IRQHandler              // USB wakeup handler
 };
 
+// Handler por defecto: entra en bucle infinito si no hay otro definido
 void Default_Handler(void) {
     while (1);
 }
 
+// Reset Handler: punto de entrada tras un reset
 void Reset_Handler(void) {
     // Copiar la sección .data de la memoria flash a la RAM
     uint32_t *src = &_load_address;
@@ -125,7 +133,7 @@ void Reset_Handler(void) {
         *dest++ = *src++;
     }
 
-    // Inicializar la sección .bss en 0
+    // Inicializa la sección .bss con ceros (RAM no inicializada)
     for (uint32_t *dest = &_sbss; dest < &_ebss;) {
         *dest++ = 0;
     }
@@ -133,6 +141,6 @@ void Reset_Handler(void) {
     // Llama a la función main
     main();
 
-    // main() no debería retornar, pero por si acaso...
+    // Si main retorna, queda en bucle infinito.
     while (1);
 }
