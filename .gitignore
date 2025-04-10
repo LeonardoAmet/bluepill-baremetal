@@ -1,7 +1,18 @@
-# Ignorar todo dentro de bin y obj
-bin/*
-obj/*
+# Archivos y carpetas generadas por el build
+/bin/
+/obj/
+*.elf
+*.bin
+*.map
+*.hex
 
-# Pero mantener las carpetas
-!bin/.gitkeep
-!obj/.gitkeep
+# Archivos temporales y de backup
+*~
+*.swp
+.DS_Store
+
+# VS Code (si no querés subir configs específicas)
+.vscode/
+
+# Archivos de log y debug
+*.log
