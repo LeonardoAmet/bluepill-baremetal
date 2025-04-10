@@ -1,5 +1,3 @@
-
-
 TARGET = blink_minimal
 
 CC = arm-none-eabi-gcc

@@ -1,4 +1,5 @@
 #include <stdint.h>
+
 // Necesitamos definir los siguientes registros:
 // RCC_APB2ENR: APB2 peripheral clock enable register
 #define         RCC_APB2ENR     (*((int*)0x40021018U))

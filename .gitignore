@@ -1,2 +1,7 @@
-bin/
-obj/
+# Ignorar todo dentro de bin y obj
+bin/*
+obj/*
+
+# Pero mantener las carpetas
+!bin/.gitkeep
+!obj/.gitkeep
