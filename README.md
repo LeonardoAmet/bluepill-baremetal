@@ -86,7 +86,7 @@ make flash
 
 ---
 
-## 🧠 Frase de cabecera
+## 🧠
 
 > “No se puede controlar lo que no se comprende.”  
 > — Richard Feynman, probablemente
