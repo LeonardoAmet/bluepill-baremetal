@@ -1,4 +1,4 @@
-# Nombre del ejecutable (sin extensión)
+# Nombre del ejecutable
 TARGET = blink_minimal.elf
 
 # Compilador
