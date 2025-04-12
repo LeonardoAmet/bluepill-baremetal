@@ -4,6 +4,9 @@
 Sin HAL, sin magia: solo registros, C puro y un Makefile simple. Ideal para aprender cómo funciona todo desde adentro 🔍⚙️
 
 ---
+> ⚠️ Este entorno fue probado en WSL2 (Ubuntu), pero también es compatible con cualquier distribución Linux que tenga las herramientas instaladas.
+
+---
 
 ## 📦 Estructura del proyecto
 
