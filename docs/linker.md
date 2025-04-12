@@ -153,7 +153,7 @@ Memoria RAM (20 KB)
             |                           |  
 0x08000000  |                           |  ← dirección de inicio de FLASH
             +---------------------------+
-
+```
 ---
 
 ## 🧠 Conclusiones
