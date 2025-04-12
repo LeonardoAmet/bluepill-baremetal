@@ -97,3 +97,16 @@ make flash
 
 Este proyecto está licenciado bajo los términos de la [Licencia MIT](LICENSE).
 
+---
+
+## 📘 Documentación técnica
+
+> ¿Querés entender cómo funciona todo por dentro? Explorá los siguientes archivos:
+
+- [main.md](docs/main.md): explicación detallada del programa de ejemplo (blink).
+- [startup.md](docs/startup.md): cómo arranca el sistema desde el reset.
+- [linker.md](docs/linker.md): cómo se organiza la memoria con el linker script.
+- [toolchain.md](docs/toolchain.md): recorrido completo por la toolchain y sus herramientas.
+
+> Todos estos documentos están en la carpeta `docs/`.
+
