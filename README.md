@@ -12,9 +12,15 @@ bluepill-baremetal/
 ├── src/               # Código fuente en C (sin HAL)
 ├── bin/               # Binarios generados (.elf, .bin, .map)
 ├── obj/               # Archivos objeto intermedios
+├── docs/              # Documentación técnica del proyecto
+│   ├── main.md        # Análisis detallado del main.c
+│   ├── startup.md     # Explicación del startup.c
+│   ├── linker.md      # Explicación del script de linker
+│   └── toolchain.md   # Explicación del entorno de desarrollo
 ├── linker.ld          # Script de linker personalizado
 ├── Makefile           # Build system simple y transparente
 └── README.md          # Este archivo ✍️
+
 ```
 
 ---
