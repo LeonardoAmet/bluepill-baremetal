@@ -1,5 +1,9 @@
 #include <stdint.h>
 
+
+int led_status = 1; // Variable global
+int dummy;
+
 // Definición de registros y direcciones de periféricos
 #define RCC_APB2ENR     (*((volatile uint32_t*)0x40021018U))        // Registro de habilitación de clocks (p. 112)
 #define GPIOC_BASE      (0x40011000U)                               // Dirección base del GPIOC

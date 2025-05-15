@@ -88,24 +88,26 @@ SECTIONS
         *(.text*)         /* Captura todas las subsecciones que empiecen con .text */
     } > FLASH
 
+    /* Sección BSS: variables no inicializadas */
+    .bss : {
+        _sbss = .;            /* Inicio de BSS */
+        *(.bss*)          /* Variables globales sin valor inicial */
+        _ebss = .;            /* Fin de BSS */
+    } > RAM
+    
     /* Sección de datos inicializados */
     
     /* El símbolo '.' representa el contador de ubicación: la dirección actual 
        en la que el linker está ubicando contenido. Se usa para marcar direcciones. */
-    _sdata = .;           /* Marca el inicio de la sección .data en RAM */
-
+    
     .data : {
+        _sdata = .;           /* Marca el inicio de la sección .data en RAM */
         *(.data*)         /* Variables globales con valor inicial */
+        _edata = .;           /* Marca el fin de la sección .data */    
     } > RAM AT > FLASH     /* Se colocan en RAM pero se cargan desde FLASH */
-    _edata = .;           /* Marca el fin de la sección .data */
-
-    /* Sección BSS: variables no inicializadas */
-    _sbss = .;            /* Inicio de BSS */
-    .bss : {
-        *(.bss*)          /* Variables globales sin valor inicial */
-    } > RAM
-    _ebss = .;            /* Fin de BSS */
-
+    
+    
+    
     /* Dirección de donde se debe copiar .data al iniciar */
     _load_address = LOADADDR(.data);
 }
