@@ -79,6 +79,41 @@ make flash
 
 ---
 
+## 🧰 Uso con VS Code (.vscode/)
+
+Este repositorio incluye configuración lista para usar con **Visual Studio Code** como entorno de desarrollo embebido.
+
+### 🧠 ¿Qué incluye?
+
+- **`launch.json`**  
+  Configuración para depurar con la extensión [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug).  
+  Permite debuggear con `F5`, detenerse en `main()`, ver registros, memoria y periféricos.
+
+- **`tasks.json`**  
+  Define tareas automáticas:
+  - `Ctrl+Shift+B` → compila (`make`)
+  - `Ctrl+Shift+P → Run Task → clean` → limpia (`make clean`)
+  - `Ctrl+Shift+P → Run Task → flash` → flashea (`make flash`)
+
+### ⚙️ Requisitos
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- Extensión [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
+- Herramientas instaladas:
+  - `make`
+  - `arm-none-eabi-gcc`
+  - `openocd`
+
+### 🧪 Flujo sugerido con VS Code
+
+1. Abrí el proyecto en VS Code
+2. Presioná `Ctrl+Shift+B` para compilar
+3. Presioná `F5` para iniciar la depuración (requiere ST-Link conectado)
+4. Usá `Run Task` (`Ctrl+Shift+P`) para acceder a `clean` o `flash` si lo deseás
+
+---
+
+
 ## 🎓 Ideal para...
 
 - Estudiantes de sistemas embebidos
