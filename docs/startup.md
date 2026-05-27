@@ -1,97 +1,110 @@
-# 🧠 Entendiendo `startup.c` en proyectos bare-metal STM32
+# Entendiendo `startup.c`
 
-Este archivo es esencial en cualquier proyecto bare-metal. Se encarga de preparar el entorno mínimo para que tu programa (el `main()`) pueda ejecutarse correctamente. No hay sistema operativo ni entorno de runtime: lo hacemos todo nosotros.
+En un proyecto bare-metal no hay sistema operativo ni runtime que prepare el entorno antes de ejecutar `main()`. Ese trabajo inicial lo hace el código de arranque, normalmente ubicado en `startup.c` o en un archivo equivalente.
 
----
+## Qué resuelve el archivo de arranque
 
-## 🔹 ¿Qué contiene el archivo `startup.c`?
+Su responsabilidad es dejar al microcontrolador en un estado mínimo y consistente para que el programa principal pueda correr.
 
-### 1. **La tabla de vectores (`.isr_vector`)**
-Es un array de punteros a funciones que indica a la CPU:
-- Dónde está el stack pointer inicial (SP)
-- Qué función ejecutar ante un reset (Reset_Handler)
-- Qué función ejecutar ante interrupciones y excepciones
+En este caso incluye:
+
+1. la tabla de vectores,
+2. el `Reset_Handler`,
+3. handlers por defecto para excepciones e interrupciones no implementadas.
+
+## Tabla de vectores
 
 ```c
 __attribute__((section(".isr_vector")))
 void (*const vector_table[])(void) = {
-    (void (*)(void))(&__reset_stack_pointer), // Valor inicial del SP
-    Reset_Handler,                            // Punto de entrada tras reset
+    (void (*)(void))(&__reset_stack_pointer),
+    Reset_Handler,
     NMI_Handler,
     HardFault_Handler,
     ...
 };
 ```
 
-> 📘 Esta tabla se ubica en la dirección 0x08000000 (inicio de la Flash del STM32), definida en el linker script.
+La tabla de vectores le indica a la CPU:
 
----
+- cuál es el valor inicial del stack pointer,
+- qué función ejecutar después de un reset,
+- qué ISR corresponde a cada excepción o interrupción.
 
-### 2. **El `Reset_Handler`**
-Esta función se ejecuta automáticamente luego del reset del microcontrolador. Su trabajo es:
+El linker ubica esta tabla al comienzo de la memoria Flash.
 
-- Copiar la sección `.data` desde Flash a RAM
-- Inicializar en cero la sección `.bss` (RAM sin inicializar)
-- Llamar a la función `main()`
+## `Reset_Handler`
+
+Es el punto de entrada real del programa después de un reset.
+
+Sus tareas típicas son:
+
+- copiar `.data` desde Flash a RAM,
+- inicializar `.bss` con ceros,
+- invocar `main()`.
+
+Ejemplo simplificado:
 
 ```c
 void Reset_Handler(void) {
-    // Copia .data desde Flash a RAM
     uint32_t *src = &_load_address;
     for (uint32_t *dest = &_sdata; dest < &_edata;) {
         *dest++ = *src++;
     }
 
-    // Inicializa .bss con ceros
     for (uint32_t *dest = &_sbss; dest < &_ebss;) {
         *dest++ = 0;
     }
 
-    // Llama al main
     main();
 
-    while (1); // Seguridad por si main retorna
+    while (1);
 }
 ```
 
----
+Si `main()` retorna, el código entra en un bucle infinito. En firmware embebido eso suele considerarse una condición inválida o al menos no prevista.
 
-### 3. **Los demás handlers**
+## Handlers por defecto
 
-Son funciones que responden a interrupciones. Si no están implementadas, caen por defecto en `Default_Handler`:
+Cuando una interrupción no tiene implementación propia, normalmente se redirige a un handler por defecto:
 
 ```c
 void Default_Handler(void) {
-    while (1); // Bucle infinito si se dispara una interrupción no manejada
+    while (1);
 }
 ```
 
-Podés redefinir cualquier handler en tu código, por ejemplo:
-```c
-void EXTI0_IRQHandler(void) {
-    // Código que se ejecuta cuando se activa la interrupción externa 0
-}
-```
+Eso permite detectar fallos tempranamente durante debug. Si el micro entra ahí, es señal de que ocurrió una excepción no atendida o de que falta una ISR.
 
----
+## Relación con el linker script
 
-## 🧠 ¿Por qué es importante entender esto?
+`startup.c` depende de símbolos definidos en `linker.ld`, por ejemplo:
 
-Porque en bare-metal:
-- Vos decidís qué pasa desde que el micro se resetea.
-- No hay sistema operativo que “inicialice todo por vos”.
-- Entender `startup.c` te da control total y facilita la integración con librerías como CMSIS, FreeRTOS o tu propio bootloader.
+- `__reset_stack_pointer`
+- `_sdata`
+- `_edata`
+- `_sbss`
+- `_ebss`
+- `_load_address`
 
----
+Sin esos símbolos, el startup no sabe:
 
-## 📌 Info adicional
+- dónde empieza la RAM útil,
+- dónde están las secciones a copiar,
+- ni cuál debe ser el stack inicial.
 
-El archivo `startup.c` trabaja en conjunto con el `linker.ld`. Este último ubica las secciones `.isr_vector`, `.data`, `.bss`, etc. en memoria. Entender ambos es clave para dominar proyectos embebidos.
+## Por qué conviene entenderlo
 
-> ¿Querés seguir profundizando?
-> - [linker.md](linker.md): cómo se organiza la memoria y qué hace el linker script.
-> - [main.md](main.md): explicación detallada del programa de ejemplo.
-> - [toolchain.md](toolchain.md): cómo funciona cada componente del entorno de compilación.
-> - [README.md](../README.md): introducción general del proyecto.
+Entender el startup ayuda a:
 
+- depurar errores tempranos de arranque,
+- integrar bibliotecas o RTOS con más criterio,
+- adaptar el proyecto a otros micros o mapas de memoria,
+- entender qué ocurre antes de que `main()` siquiera exista como contexto de ejecución.
 
+## Lecturas relacionadas
+
+- [linker.md](linker.md)
+- [main.md](main.md)
+- [toolchain.md](toolchain.md)
+- [README.md](../README.md)

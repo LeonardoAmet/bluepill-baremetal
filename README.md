@@ -1,51 +1,51 @@
-# 🧵 bluepill-baremetal
+# bluepill-baremetal
 
-🎯 **Proyecto minimalista para programar la Blue Pill (STM32F103C8T6) en bare-metal usando WSL2.**  
-Sin HAL, sin magia: solo registros, C puro y un Makefile simple. Ideal para aprender cómo funciona todo desde adentro 🔍⚙️
+Proyecto mínimo para programar la Blue Pill (STM32F103C8T6) en bare-metal.
 
----
-> ⚠️ Este entorno fue probado en WSL2 (Ubuntu), pero también es compatible con cualquier distribución Linux que tenga las herramientas instaladas.
+El objetivo de este repositorio es mostrar el camino más directo posible entre:
 
----
+- el código fuente en C,
+- el mapa de memoria del microcontrolador,
+- el arranque del sistema,
+- y el binario final que se flashea en la placa.
 
-## 📦 Estructura del proyecto
+No usa HAL ni otras capas de abstracción. El acceso al hardware se hace por registros.
 
-```
+> El entorno fue probado en WSL2 con Ubuntu, pero también puede usarse en Linux nativo si están instaladas las herramientas necesarias.
+
+## Estructura del proyecto
+
+```text
 bluepill-baremetal/
-├── src/               # Código fuente en C (sin HAL)
+├── src/               # Código fuente en C
 ├── bin/               # Binarios generados (.elf, .bin, .map)
 ├── obj/               # Archivos objeto intermedios
-├── docs/              # Documentación técnica del proyecto
-│   ├── main.md        # Análisis detallado del main.c
-│   ├── startup.md     # Explicación del startup.c
-│   ├── linker.md      # Explicación del script de linker
-│   └── toolchain.md   # Explicación del entorno de desarrollo
-├── linker.ld          # Script de linker personalizado
-├── Makefile           # Build system simple y transparente
-└── README.md          # Este archivo ✍️
-
+├── docs/              # Documentación técnica
+│   ├── main.md
+│   ├── startup.md
+│   ├── linker.md
+│   └── toolchain.md
+├── linker.ld          # Script de linker
+├── Makefile           # Reglas de compilación y flashing
+└── README.md
 ```
 
----
+## Requisitos
 
-## 🚀 Cómo compilar y flashear
+- [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) o Linux nativo
+- `gcc-arm-none-eabi`
+- `openocd`
+- `gdb-multiarch` para debug
+- un ST-Link o compatible
 
-Este proyecto está pensado para usarse con **WSL2 + arm-none-eabi-gcc + OpenOCD**.
+Instalación típica en Ubuntu:
 
-### 🔧 Requisitos
+```bash
+sudo apt update
+sudo apt install gcc-arm-none-eabi openocd gdb-multiarch make
+```
 
-- [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install)
-- Toolchain ARM:
-  ```bash
-  sudo apt install gcc-arm-none-eabi
-  ```
-- OpenOCD:
-  ```bash
-  sudo apt install openocd
-  ```
-- ST-Link conectado por USB
-
-### 🔨 Compilar
+## Compilación
 
 ```bash
 make
@@ -53,104 +53,61 @@ make
 
 Esto genera:
 
-- `bin/blink_minimal.elf`: binario ELF con info de depuración 🧠
-- `bin/blink_minimal.bin`: binario puro para flashear 🚀
-- `bin/blink_minimal.map`: mapa de memoria 📊
+- `bin/blink_minimal.elf`: ejecutable con símbolos de depuración
+- `bin/blink_minimal.bin`: binario crudo para flashing
+- `bin/blink_minimal.map`: mapa de memoria del enlazado
 
-### ⚡ Flashear la placa
+## Flashing
 
 ```bash
 make flash
 ```
 
-> Usa OpenOCD con configuración para ST-Link y STM32F1.
+La regla usa OpenOCD con configuración para ST-Link y STM32F1.
 
-### 🐛 Debug con GDB
+## Debug con GDB
 
-1. En una terminal:
-   ```bash
-   make openocd
-   ```
+En una terminal:
 
-2. En otra:
-   ```bash
-   make gdb
-   ```
+```bash
+make openocd
+```
 
----
+En otra:
 
-## 🧰 Uso con VS Code (.vscode/)
+```bash
+make gdb
+```
 
-Este repositorio incluye configuración lista para usar con **Visual Studio Code** como entorno de desarrollo embebido.
+## Uso con VS Code
 
-### 🧠 ¿Qué incluye?
+El repo incluye configuración pensada para trabajar con Visual Studio Code y la extensión Cortex-Debug.
 
-- **`launch.json`**  
-  Configuración para depurar con la extensión [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug).  
-  Permite debuggear con `F5`, detenerse en `main()`, ver registros, memoria y periféricos.
+Flujo sugerido:
 
-- **`tasks.json`**  
-  Define tareas automáticas:
-  - `Ctrl+Shift+B` → compila (`make`)
-  - `Ctrl+Shift+P → Run Task → clean` → limpia (`make clean`)
-  - `Ctrl+Shift+P → Run Task → flash` → flashea (`make flash`)
+1. Abrir el proyecto en VS Code.
+2. Compilar con `Ctrl+Shift+B`.
+3. Iniciar depuración con `F5`.
+4. Usar tareas para `clean` o `flash` si hace falta.
 
-### ⚙️ Requisitos
+## Alcance
 
-- [Visual Studio Code](https://code.visualstudio.com/)
-- Extensión [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
-- Herramientas instaladas:
-  - `make`
-  - `arm-none-eabi-gcc`
-  - `openocd`
+Este repositorio es útil como base para:
 
-### 🧪 Flujo sugerido con VS Code
+- entender startup y linker scripts,
+- practicar acceso directo a registros,
+- estudiar organización de memoria en Cortex-M,
+- preparar el salto a CMSIS, libopencm3 o FreeRTOS con más contexto.
 
-1. Abrí el proyecto en VS Code
-2. Presioná `Ctrl+Shift+B` para compilar
-3. Presioná `F5` para iniciar la depuración (requiere ST-Link conectado)
-4. Usá `Run Task` (`Ctrl+Shift+P`) para acceder a `clean` o `flash` si lo deseás
+## Documentación técnica
 
----
+Los documentos principales están en `docs/`:
 
+- [main.md](docs/main.md): análisis del ejemplo de blink.
+- [startup.md](docs/startup.md): arranque del sistema después del reset.
+- [linker.md](docs/linker.md): distribución de secciones en memoria.
+- [toolchain.md](docs/toolchain.md): herramientas de compilación, enlace, flashing y debug.
 
-## 🎓 Ideal para...
+## Licencia
 
-- Estudiantes de sistemas embebidos
-- Docentes que quieren enseñar desde lo más bajo nivel
-- Curiosos del hardware que prefieren saber **exactamente qué está pasando**
-
----
-
-## 📚 Expansiones sugeridas
-
-- Agregar manejo de interrupciones 🧠
-- Controlar periféricos como GPIO, USART, ADC, etc. 💡
-- Agregar FreeRTOS desde cero 🧵
-
----
-
-## 🧠
-
-> “No se puede controlar lo que no se comprende.”  
-> — Richard Feynman, probablemente
-
----
-
-## 🪪 Licencia
-
-Este proyecto está licenciado bajo los términos de la [Licencia MIT](LICENSE).
-
----
-
-## 📘 Documentación técnica
-
-> ¿Querés entender cómo funciona todo por dentro? Explorá los siguientes archivos:
-
-- [main.md](docs/main.md): explicación detallada del programa de ejemplo (blink).
-- [startup.md](docs/startup.md): cómo arranca el sistema desde el reset.
-- [linker.md](docs/linker.md): cómo se organiza la memoria con el linker script.
-- [toolchain.md](docs/toolchain.md): recorrido completo por la toolchain y sus herramientas.
-
-> Todos estos documentos están en la carpeta `docs/`.
-
+Este proyecto se distribuye bajo la [Licencia MIT](LICENSE).

@@ -1,32 +1,18 @@
-# 🧩 Entendiendo `linker.ld` en proyectos STM32
+# Entendiendo `linker.ld`
 
-El archivo `linker.ld` (linker script) es el responsable de decirle al enlazador **cómo organizar el código y los datos** en la memoria del microcontrolador STM32F103C8T6 (Blue Pill).
+El archivo `linker.ld` define cómo se distribuyen el código y los datos en la memoria del STM32F103C8T6.
 
-Este script trabaja en conjunto con `startup.c` y es esencial para el correcto funcionamiento de cualquier sistema embebido, **ya sea bare-metal o basado en un sistema operativo**.
+El compilador traduce cada archivo fuente a objetos (`.o`), pero el linker es quien decide finalmente dónde queda cada sección dentro de Flash y RAM.
 
----
+## Qué define este script
 
-## 🔹 ¿Qué define este script?
+En este proyecto el linker script fija:
 
-1. **Las regiones de memoria disponibles**:
+1. las regiones de memoria disponibles,
+2. la ubicación de secciones como `.vectors`, `.text`, `.data` y `.bss`,
+3. los símbolos que necesita `startup.c` para inicializar el sistema.
 
-   - `FLASH`: código del programa y datos iniciales (64 KB desde `0x08000000`)
-   - `RAM`: datos en tiempo de ejecución, pila, variables (20 KB desde `0x20000000`)
-
-2. **Dónde se ubica cada sección del programa**:
-
-   - `.vectors`: vector de interrupciones (inicio de la FLASH)
-   - `.text`: funciones y código ejecutable
-   - `.data`: variables globales con valor inicial (copiadas desde FLASH a RAM en el arranque)
-   - `.bss`: variables globales no inicializadas (se llenan con ceros al iniciar)
-
-3. **Símbolos útiles que exporta para el \*\*\*\*****`startup.c`**:
-
-   - `__reset_stack_pointer`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_load_address`
-
----
-
-## 📦 Regiones de memoria
+## Regiones de memoria
 
 ```ld
 MEMORY {
@@ -35,30 +21,22 @@ MEMORY {
 }
 ```
 
-Esto define el mapa de memoria del microcontrolador.
+Esto describe el mapa básico del microcontrolador:
 
-- `rx` → lectura + ejecución (para código en FLASH)
-- `rwx` → lectura + escritura + ejecución (para variables en RAM)
+- `FLASH`: donde vive el código y los datos iniciales,
+- `RAM`: donde viven las variables en tiempo de ejecución, la pila y otras estructuras temporales.
 
-También se define:
+Además suele definirse el stack inicial:
 
 ```ld
 __reset_stack_pointer = ORIGIN(RAM) + LENGTH(RAM);
 ```
 
-> Es el valor inicial del Stack Pointer, apuntando al final de la RAM.
+Ese valor apunta al final de la RAM, que es donde normalmente comienza la pila en Cortex-M.
 
----
+## Secciones principales
 
-## 🗂️ Organización de secciones
-
-### 📌 ¿Qué es el contador de ubicación `.`?
-
-El símbolo `.` representa la **posición actual de memoria** que está siendo asignada. El linker lo va moviendo a medida que va colocando datos o código. También se usa para definir símbolos como `_sdata = .;`, es decir: “desde este punto comienza la sección `.data`”.
-
----
-
-### 🧭 Vector de interrupciones
+### `.vectors`
 
 ```ld
 .vectors : {
@@ -66,10 +44,9 @@ El símbolo `.` representa la **posición actual de memoria** que está siendo a
 } > FLASH
 ```
 
-- Contiene el stack pointer inicial y los punteros a los handlers.
-- Es lo primero que ejecuta el micro tras un reset.
+Contiene la tabla de vectores de interrupción. Debe ubicarse al comienzo de Flash para que el procesador pueda tomarla en el reset.
 
-### ⚙️ Código ejecutable
+### `.text`
 
 ```ld
 .text : {
@@ -77,9 +54,9 @@ El símbolo `.` representa la **posición actual de memoria** que está siendo a
 } > FLASH
 ```
 
-- Todas las funciones, como `main`, van acá.
+Incluye el código ejecutable y, según el proyecto, otras secciones relacionadas como constantes o tablas.
 
-### 📦 Variables con valor inicial
+### `.data`
 
 ```ld
 _sdata = .;
@@ -89,18 +66,17 @@ _sdata = .;
 _edata = .;
 ```
 
-- En tiempo de ejecución, `.data` vive en RAM.
-- Pero los valores iniciales están en FLASH, y se copian con `startup.c`
+`.data` contiene variables globales o estáticas con valor inicial.
 
-El símbolo especial:
+Durante la ejecución viven en RAM, pero su valor inicial se almacena en Flash. Por eso `startup.c` debe copiarlas al arrancar.
+
+La dirección de origen se obtiene con:
 
 ```ld
 _load_address = LOADADDR(.data);
 ```
 
-> Le indica al programa desde qué dirección en FLASH debe copiarse `.data`.
-
-### 🧽 Variables no inicializadas
+### `.bss`
 
 ```ld
 _sbss = .;
@@ -110,65 +86,51 @@ _sbss = .;
 _ebss = .;
 ```
 
-- `.bss` ocupa RAM pero no tiene valores en FLASH.
-- `startup.c` debe llenarla con ceros al iniciar.
+`.bss` contiene variables no inicializadas. No ocupa espacio útil en Flash para datos, pero sí reserva RAM. En el arranque debe completarse con ceros.
 
----
+## El contador de ubicación `.`
 
-## 🗺️ Mapa visual de la memoria
+El símbolo `.` representa la posición actual del linker dentro de la región de memoria activa. Se usa para marcar comienzos y finales de secciones, por ejemplo `_sdata`, `_edata`, `_sbss` y `_ebss`.
 
+## Mapa conceptual de memoria
+
+```text
+FLASH
+0x08000000  -> .vectors
+              .text
+              valores iniciales de .data
+... 
+
+RAM
+0x20000000  -> .data
+              .bss
+              espacio libre
+              stack
+0x20005000  -> stack pointer inicial
 ```
-Memoria RAM (20 KB)
 
-0x20005000                                 ← valor inicial del Stack Pointer (SP), fuera del rango de RAM
-            +---------------------------+   
-0x20004FFF  |                           |  ← dirección final de la RAM
-            |     STACK (pila)          |
-            |     (crece hacia abajo)   |   
-            |             ↓             |  ← Stack Pointer (SP): apunta a último valor apilado
-            +---------------------------+   
-            |                           |  
-            |     (espacio libre)       | 
-            |                           |  
-            +---------------------------+
-            | .bss                      |  ← variables no inicializadas
-            +---------------------------+
-            | .data (en RAM)            |  ← variables inicializadas (copiadas desde FLASH)
-0x20000000  |                           |  ← dirección de inicio de RAM
-            +---------------------------+    
-        
-            ...
-            
-            Memoria FLASH
-            +---------------------------+  
-0x0800FFFF  |                           |  ← fin de FLASH: dirección final de la memoria FLASH
-            |     (espacio libre)       |  
-            |                           |
-            +---------------------------+
-            | .data                     |  ← valores originales de las variables inicializadas
-            +---------------------------+
-            | .text                     |  ← funciones y código ejecutable
-            +---------------------------+
-            | .vectors                  |  ← tabla de vectores de excepción e interrupción  (Stack Pointer inicial, Reset, NMI, etc.)
-            |                           |  
-0x08000000  |                           |  ← dirección de inicio de FLASH
-            +---------------------------+
-```
----
+## Relación con `startup.c`
 
-## 🧠 Conclusiones
+El startup usa los símbolos del linker para:
 
-- El linker script **define la realidad física de tu programa en memoria**.
-- Es imprescindible para todo tipo de proyecto embebido, ya sea bare-metal o con RTOS.
-- Junto con `startup.c`, permite que el `main()` arranque en un entorno controlado.
-- Con pequeños cambios, podés adaptarlo a otros micros STM32 (cambiando tamaños y direcciones).
+- copiar `.data` desde Flash a RAM,
+- limpiar `.bss`,
+- cargar el valor inicial de la pila.
 
----
+Por eso `linker.ld` y `startup.c` deben leerse juntos. Uno define el mapa; el otro usa ese mapa para inicializar la memoria.
 
-## 📌 Info adicional
+## Por qué conviene entenderlo
 
-> ¿Querés seguir profundizando?
-> - [startup.md](startup.md): cómo se inicializa el sistema y se salta a `main()`.
-> - [main.md](main.md): análisis del programa blink y acceso directo a registros.
-> - [toolchain.md](toolchain.md): recorrido completo por las herramientas de compilación, enlace y flasheo.
-> - [README.md](../README.md): introducción general al proyecto.
+Entender el linker script ayuda a:
+
+- depurar errores de memoria,
+- interpretar mapas de enlazado,
+- adaptar el firmware a otras variantes del micro,
+- saber qué ocurre realmente entre el código fuente y la memoria física del dispositivo.
+
+## Lecturas relacionadas
+
+- [startup.md](startup.md)
+- [main.md](main.md)
+- [toolchain.md](toolchain.md)
+- [README.md](../README.md)
